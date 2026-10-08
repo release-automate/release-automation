@@ -35,7 +35,7 @@ jobs:
       - name: Checkout hub repo
         uses: actions/checkout@v4
         with:
-          repository: ${{ github.repository_owner }}/release-automation
+          repository: release-automate/release-automation
           token: ${{ secrets.GH_TOKEN }}
 
       - uses: actions/setup-node@v4
