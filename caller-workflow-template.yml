@@ -1,0 +1,60 @@
+# ─────────────────────────────────────────────────────────────────────────────
+# COPY THIS FILE to each of your 20 repos at:
+#   .github/workflows/release-automation.yml
+#
+# Replace YOUR_ORG with your GitHub organisation name.
+# That's the ONLY change needed. All logic lives in the hub repo.
+# ─────────────────────────────────────────────────────────────────────────────
+
+name: Release Automation
+
+on:
+  create:              # Flow 1 — branch created
+
+  pull_request:        # Flow 2 — PR merged to main
+    types: [closed]
+    branches: [main]
+
+  push:                # Flow 4 — release branch deployed
+    branches:
+      - 'release/**'
+
+jobs:
+  # ── Flow 1: Branch created → JIRA In Progress ──────────────────────────────
+  on-branch-created:
+    name: Flow 1 — In Progress
+    if: github.event_name == 'create'
+    uses: YOUR_ORG/release-automation/.github/workflows/branch-automation.yml@main
+    with:
+      branch_name: ${{ github.ref_name }}
+      ref_type:    ${{ github.event.ref_type }}
+      repo_name:   ${{ github.repository }}
+    secrets: inherit
+
+  # ── Flow 2: PR merged → JIRA Ready for Testing ─────────────────────────────
+  on-pr-merged:
+    name: Flow 2 — Ready for Testing
+    if: >
+      github.event_name == 'pull_request' &&
+      github.event.pull_request.merged == true
+    uses: YOUR_ORG/release-automation/.github/workflows/pr-automation.yml@main
+    with:
+      pr_number:   ${{ github.event.pull_request.number }}
+      pr_title:    ${{ github.event.pull_request.title }}
+      pr_body:     ${{ github.event.pull_request.body }}
+      pr_merged:   ${{ github.event.pull_request.merged }}
+      base_branch: ${{ github.event.pull_request.base.ref }}
+      repo_name:   ${{ github.repository }}
+    secrets: inherit
+
+  # ── Flow 4: Release branch pushed → JIRA Accepted ──────────────────────────
+  on-release-deploy:
+    name: Flow 4 — Accepted
+    if: >
+      github.event_name == 'push' &&
+      startsWith(github.ref, 'refs/heads/release/')
+    uses: YOUR_ORG/release-automation/.github/workflows/deploy-automation.yml@main
+    with:
+      ref:       ${{ github.ref }}
+      repo_name: ${{ github.repository }}
+    secrets: inherit

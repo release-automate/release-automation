@@ -1,0 +1,91 @@
+name: Branch Automation (Flow 1 — In Progress)
+
+on:
+  workflow_call:
+    inputs:
+      branch_name:
+        description: The name of the branch that was created
+        type: string
+        required: true
+      ref_type:
+        description: '"branch" or "tag"'
+        type: string
+        required: true
+      repo_name:
+        description: The full repo name, e.g. your-org/repo
+        type: string
+        required: true
+    secrets:
+      JIRA_BASE_URL:
+        required: true
+      JIRA_EMAIL:
+        required: true
+      JIRA_API_TOKEN:
+        required: true
+      JIRA_PROJECT_KEY:
+        required: true
+      # Confluence + GH + OpenAI inherited but not needed for Flow 1
+      CONFLUENCE_BASE_URL:
+        required: false
+      CONFLUENCE_EMAIL:
+        required: false
+      CONFLUENCE_API_TOKEN:
+        required: false
+      CONFLUENCE_SPACE_KEY:
+        required: false
+      CONFLUENCE_PARENT_PAGE_ID:
+        required: false
+      GH_TOKEN:
+        required: true
+      GH_ORG:
+        required: true
+      OPENAI_API_KEY:
+        required: false
+
+jobs:
+  jira-in-progress:
+    name: Move JIRA ticket → In Progress
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout hub repo (release-automation)
+        uses: actions/checkout@v4
+        with:
+          repository: ${{ github.repository_owner }}/release-automation
+          token: ${{ secrets.GH_TOKEN }}
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 9
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Run branchCreated handler
+        env:
+          BRANCH_NAME: ${{ inputs.branch_name }}
+          REF_TYPE:    ${{ inputs.ref_type }}
+          REPO:        ${{ inputs.repo_name }}
+          # JIRA
+          JIRA_BASE_URL:    ${{ secrets.JIRA_BASE_URL }}
+          JIRA_EMAIL:       ${{ secrets.JIRA_EMAIL }}
+          JIRA_API_TOKEN:   ${{ secrets.JIRA_API_TOKEN }}
+          JIRA_PROJECT_KEY: ${{ secrets.JIRA_PROJECT_KEY }}
+          # Confluence (required by config validation — pass dummy values for Flow 1)
+          CONFLUENCE_BASE_URL:        ${{ secrets.CONFLUENCE_BASE_URL || 'https://placeholder.atlassian.net/wiki' }}
+          CONFLUENCE_EMAIL:           ${{ secrets.CONFLUENCE_EMAIL || 'placeholder@example.com' }}
+          CONFLUENCE_API_TOKEN:       ${{ secrets.CONFLUENCE_API_TOKEN || 'placeholder' }}
+          CONFLUENCE_SPACE_KEY:       ${{ secrets.CONFLUENCE_SPACE_KEY || 'PLACEHOLDER' }}
+          CONFLUENCE_PARENT_PAGE_ID:  ${{ secrets.CONFLUENCE_PARENT_PAGE_ID || '0' }}
+          # GitHub
+          GH_TOKEN: ${{ secrets.GH_TOKEN }}
+          GH_ORG:   ${{ secrets.GH_ORG }}
+          # OpenAI (not used in Flow 1)
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY || 'placeholder' }}
+        run: pnpm tsx scripts/branchCreated.ts
