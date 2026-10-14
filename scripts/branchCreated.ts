@@ -9,8 +9,8 @@
  * Plus all service credentials from GitHub Org Secrets.
  */
 
-import '../src/config.js';   // validates env vars early — fails fast if any are missing
-import { handleBranchCreated } from '../src/handlers/branchCreated.js';
+import '../src/config';   // validates env vars early — fails fast if any are missing
+import { handleBranchCreated } from '../src/handlers/branchCreated';
 
 const input = {
   branchName: process.env.BRANCH_NAME ?? '',

@@ -1,28 +1,20 @@
-/**
- * Flow 1 — Branch created → JIRA "In Progress"
- *
- * Triggered by: GitHub Actions `create` event
- * Entry point:  scripts/branchCreated.ts  (reads env vars injected by Actions)
- */
-
-import { extractTicketIds, transitionTicket } from '../services/jira.js';
+import { extractTicketIds, transitionTicket, getTicket, addComment } from '../services/jira';
+import { validateTicket, formatValidationComment }                    from '../services/validator';
 
 export interface BranchCreatedInput {
-  branchName: string;   // e.g. "feature/PROJ-123-login-screen"
-  refType:    string;   // "branch" | "tag" — only act on branches
-  repo:       string;   // "your-org/repo-name"
+  branchName: string;
+  refType:    string;
+  repo:       string;
 }
 
 export async function handleBranchCreated(input: BranchCreatedInput): Promise<void> {
   const { branchName, refType } = input;
 
-  // Ignore tag creation events
   if (refType !== 'branch') {
     console.log(`Skipping — ref type is "${refType}", not "branch".`);
     return;
   }
 
-  // Only act on feature/* and defect/* branches
   if (!/^(feature|defect)\//i.test(branchName)) {
     console.log(`Skipping — branch "${branchName}" is not a feature or defect branch.`);
     return;
@@ -37,12 +29,54 @@ export async function handleBranchCreated(input: BranchCreatedInput): Promise<vo
 
   console.log(`Branch "${branchName}" → tickets: ${ticketIds.join(', ')}`);
 
-  // Transition every found ticket to "In Progress"
-  await Promise.all(
-    ticketIds.map(id =>
-      transitionTicket(id, 'In Progress').catch(err =>
-        console.error(`Failed to transition ${id}: ${err.message}`)
-      )
-    )
+  // Process each ticket independently — one failure must not stop the others
+  await Promise.allSettled(
+    ticketIds.map(id => processSingleTicket(id, branchName))
   );
+}
+
+async function processSingleTicket(ticketId: string, branchName: string): Promise<void> {
+  // 1. Fetch ticket details — catch separately so one bad ticket doesn't stop others
+  let ticket;
+  try {
+    ticket = await getTicket(ticketId);
+  } catch (err) {
+    console.error(`Failed to fetch ticket ${ticketId}: ${(err as Error).message}`);
+    return;   // skip this ticket — can't validate without data
+  }
+
+  // 2. Validate
+  let result;
+  try {
+    result = validateTicket(ticket);
+  } catch (err) {
+    console.error(`Failed to validate ticket ${ticketId}: ${(err as Error).message}`);
+    return;
+  }
+
+  // 3. Validation failed — post comment and block transition
+  if (!result.valid) {
+    console.log(`${ticketId} failed validation — blocking transition`);
+    result.errors.forEach(e => console.error(`   ${e.field}: ${e.message}`));
+
+    try {
+      const comment = formatValidationComment(ticket, result, 'jira');
+      await addComment(ticketId, comment);
+    } catch (err) {
+      console.error(`Failed to post comment on ${ticketId}: ${(err as Error).message}`);
+    }
+    return;   // do NOT transition
+  }
+
+  // 4. Log warnings (non-blocking)
+  if (result.warnings.length > 0) {
+    console.log(`${ticketId} has warnings: ${result.warnings.map(w => w.field).join(', ')}`);
+  }
+
+  // 5. All good — transition
+  try {
+    await transitionTicket(ticketId, 'In Progress');
+  } catch (err) {
+    console.error(`Failed to transition ${ticketId}: ${(err as Error).message}`);
+  }
 }

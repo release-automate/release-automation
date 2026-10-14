@@ -5,7 +5,7 @@
  * Entry point:  scripts/prMerged.ts
  */
 
-import { extractTicketIds, transitionTicket } from '../services/jira.js';
+import { extractTicketIds, transitionTicket } from '../services/jira';
 
 export interface PRMergedInput {
   prNumber:  number;

@@ -6,8 +6,8 @@
  * Entry point:  scripts/releaseDeploy.ts
  */
 
-import { getCommitsOnBranch }            from '../services/github.js';
-import { extractTicketIds, transitionTicket } from '../services/jira.js';
+import { getCommitsOnBranch }            from '../services/github';
+import { extractTicketIds, transitionTicket } from '../services/jira';
 
 export interface ReleaseDeployInput {
   ref:  string;   // "refs/heads/release/v2.4.0"

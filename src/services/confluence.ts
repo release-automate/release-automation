@@ -1,7 +1,7 @@
-import { config }       from '../config.js';
-import type { ReleaseDoc }   from './openai.js';
-import type { JiraTicket }   from './jira.js';
-import type { PullRequest }  from './github.js';
+import { config }       from '../config';
+import type { ReleaseDoc }   from './openai';
+import type { JiraTicket }   from './jira';
+import type { PullRequest }  from './github';
 
 const BASE    = config.CONFLUENCE_BASE_URL;
 const auth    = Buffer.from(`${config.CONFLUENCE_EMAIL}:${config.CONFLUENCE_API_TOKEN}`).toString('base64');

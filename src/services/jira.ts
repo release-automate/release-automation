@@ -1,4 +1,4 @@
-import { config } from '../config.js';
+import { config } from '../config';
 
 const BASE   = config.JIRA_BASE_URL;
 const auth   = Buffer.from(`${config.JIRA_EMAIL}:${config.JIRA_API_TOKEN}`).toString('base64');
@@ -19,6 +19,11 @@ export interface JiraTicket {
   owner:   string;
   points:  number | null;
   url:     string;
+  description:        string | null;
+  acceptanceCriteria: string | null;
+  epicLink:           string | null;
+  priority:           string | null;
+  fixVersion:         string | null;
 }
 
 interface JiraTransition {
@@ -44,16 +49,25 @@ async function jiraFetch(path: string, init?: RequestInit) {
 
 /** Fetch a single ticket and return a normalised JiraTicket. */
 export async function getTicket(ticketId: string): Promise<JiraTicket> {
-  const data = await jiraFetch(`/issue/${ticketId}?fields=summary,issuetype,status,assignee,story_points,customfield_10016`);
+  const data = await jiraFetch(
+    `/issue/${ticketId}?fields=summary,issuetype,status,assignee,` +
+    `customfield_10016,description,customfield_10014,` +  
+    `customfield_10068,priority,fixVersions`              
+  );
   return {
-    id:      data.id,
-    key:     data.key,
-    summary: data.fields.summary,
-    type:    data.fields.issuetype.name,
-    status:  data.fields.status.name,
-    owner:   data.fields.assignee?.displayName ?? 'Unassigned',
-    points:  data.fields.customfield_10016 ?? null,
-    url:     `${BASE}/browse/${data.key}`,
+    id:                 data.id,
+    key:                data.key,
+    summary:            data.fields.summary,
+    type:               data.fields.issuetype.name,
+    status:             data.fields.status.name,
+    owner:              data.fields.assignee?.displayName ?? 'Unassigned',
+    points:             data.fields.customfield_10016 ?? null,
+    url:                `${BASE}/browse/${data.key}`,
+    description:        data.fields.description?.content?.[0]?.content?.[0]?.text ?? null,
+    acceptanceCriteria: data.fields.customfield_10068 ?? null,
+    epicLink:           data.fields.customfield_10014 ?? null,
+    priority:           data.fields.priority?.name ?? null,
+    fixVersion:         data.fields.fixVersions?.[0]?.name ?? null,
   };
 }
 

@@ -1,5 +1,5 @@
 import { Octokit } from '@octokit/rest';
-import { config }  from '../config.js';
+import { config }  from '../config';
 
 export const octokit = new Octokit({ auth: config.GH_TOKEN });
 
@@ -128,4 +128,23 @@ export async function getCommitsOnBranch(
     sha:     c.sha,
     message: c.commit.message,
   }));
+}
+
+// Post a comment on a GitHub PR
+export async function addGitHubPRComment(
+  repo:      string,
+  prNumber:  number,
+  body:      string,
+): Promise<void> {
+  const [owner, repoName] = repo.includes('/')
+    ? repo.split('/', 2) as [string, string]
+    : [config.GH_ORG, repo];
+
+  await octokit.issues.createComment({
+    owner,
+    repo:     repoName,
+    issue_number: prNumber,
+    body,
+  });
+  console.log(`💬 Posted validation failure comment on PR #${prNumber}`);
 }

@@ -1,8 +1,8 @@
 import OpenAI          from 'openai';
 import { z }           from 'zod';
-import { config }      from '../config.js';
-import type { JiraTicket }   from './jira.js';
-import type { PullRequest }  from './github.js';
+import { config }      from '../config';
+import type { JiraTicket }   from './jira';
+import type { PullRequest }  from './github';
 
 export const openai = new OpenAI({ apiKey: config.OPENAI_API_KEY });
 

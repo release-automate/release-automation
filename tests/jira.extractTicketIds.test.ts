@@ -1,10 +1,10 @@
 import { describe, it, expect, vi } from 'vitest';
 
-vi.mock('../src/config.js', () => ({
+vi.mock('../src/config', () => ({
   config: { JIRA_PROJECT_KEY: 'PROJ', JIRA_BASE_URL: 'https://test.atlassian.net' },
 }));
 
-import { extractTicketIds } from '../src/services/jira.js';
+import { extractTicketIds } from '../src/services/jira';
 
 describe('extractTicketIds', () => {
   it('extracts a single ticket from a branch name', () => {

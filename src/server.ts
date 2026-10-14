@@ -10,8 +10,8 @@
 
 import express, { type Request, type Response } from 'express';
 import crypto                                    from 'node:crypto';
-import { config }                                from './config.js';
-import { handleReleaseDocGen }                   from './handlers/releaseDocGen.js';
+import { config }                                from './config';
+import { handleReleaseDocGen }                   from './handlers/releaseDocGen';
 
 const app = express();
 

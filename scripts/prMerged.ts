@@ -10,8 +10,8 @@
  *   REPO          github.repository
  */
 
-import '../src/config.js';
-import { handlePRMerged } from '../src/handlers/prMerged.js';
+import '../src/config';
+import { handlePRMerged } from '../src/handlers/prMerged';
 
 const input = {
   prNumber:   parseInt(process.env.PR_NUMBER  ?? '0', 10),

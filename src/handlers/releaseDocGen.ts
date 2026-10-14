@@ -8,11 +8,11 @@
  * To activate: run `pnpm dev` and point a JIRA webhook at your public URL.
  */
 
-import { getTickets, addComment }         from '../services/jira.js';
-import { findPRsAcrossOrg }               from '../services/github.js';
-import { generateReleaseDoc }             from '../services/openai.js';
-import { createReleasePage }              from '../services/confluence.js';
-import { config }                         from '../config.js';
+import { getTickets, addComment }         from '../services/jira';
+import { findPRsAcrossOrg }               from '../services/github';
+import { generateReleaseDoc }             from '../services/openai';
+import { createReleasePage }              from '../services/confluence';
+import { config }                         from '../config';
 
 export interface ReleaseDocGenInput {
   ticketIds: string[];   // tickets that have just moved to "Ready to Accept"

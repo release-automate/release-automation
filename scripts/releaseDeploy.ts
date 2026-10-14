@@ -6,8 +6,8 @@
  *   REPO          github.repository
  */
 
-import '../src/config.js';
-import { handleReleaseDeploy } from '../src/handlers/releaseDeploy.js';
+import '../src/config';
+import { handleReleaseDeploy } from '../src/handlers/releaseDeploy';
 
 const input = {
   ref:  process.env.GITHUB_REF ?? '',

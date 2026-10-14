@@ -1,15 +1,15 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 
-vi.mock('../src/services/jira.js', () => ({
+vi.mock('../src/services/jira', () => ({
   extractTicketIds: vi.fn(),
   transitionTicket: vi.fn().mockResolvedValue(undefined),
 }));
-vi.mock('../src/config.js', () => ({
+vi.mock('../src/config', () => ({
   config: { JIRA_PROJECT_KEY: 'PROJ', DRY_RUN: false },
 }));
 
-import { handlePRMerged }                       from '../src/handlers/prMerged.js';
-import { extractTicketIds, transitionTicket } from '../src/services/jira.js';
+import { handlePRMerged }                       from '../src/handlers/prMerged';
+import { extractTicketIds, transitionTicket } from '../src/services/jira';
 
 const mockExtract    = vi.mocked(extractTicketIds);
 const mockTransition = vi.mocked(transitionTicket);
