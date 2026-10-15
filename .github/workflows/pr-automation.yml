@@ -22,6 +22,9 @@ on:
       repo_name:
         type: string
         required: true
+      head_branch:             
+        type: string
+        required: true
     secrets:
       JIRA_BASE_URL:      { required: true }
       JIRA_EMAIL:         { required: true }
@@ -70,6 +73,7 @@ jobs:
           PR_MERGED:   ${{ inputs.pr_merged }}
           BASE_BRANCH: ${{ inputs.base_branch }}
           REPO:        ${{ inputs.repo_name }}
+          HEAD_BRANCH: ${{ inputs.head_branch }}
           JIRA_BASE_URL:    ${{ secrets.JIRA_BASE_URL }}
           JIRA_EMAIL:       ${{ secrets.JIRA_EMAIL }}
           JIRA_API_TOKEN:   ${{ secrets.JIRA_API_TOKEN }}

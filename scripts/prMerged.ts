@@ -20,6 +20,7 @@ const input = {
   merged:     process.env.PR_MERGED           === 'true',
   baseBranch: process.env.BASE_BRANCH         ?? '',
   repo:       process.env.REPO                ?? '',
+  headBranch: process.env.HEAD_BRANCH          ?? '',
 };
 
 if (!input.prNumber || !input.prTitle) {

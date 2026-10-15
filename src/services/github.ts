@@ -148,3 +148,27 @@ export async function addGitHubPRComment(
   });
   console.log(`💬 Posted validation failure comment on PR #${prNumber}`);
 }
+
+export async function deleteBranch(
+  repo:       string,
+  branchName: string,
+): Promise<void> {
+  const [owner, repoName] = repo.includes('/')
+    ? repo.split('/', 2) as [string, string]
+    : [config.GH_ORG, repo];
+
+  try {
+    await octokit.git.deleteRef({
+      owner,
+      repo:  repoName,
+      ref:   `heads/${branchName}`,  // e.g. heads/feature/PROJ-123-login
+    });
+    console.log(`🗑️  Deleted branch: ${branchName}`);
+  } catch (err: any) {
+    if (err.status === 404) {
+      console.log(`Branch "${branchName}" already deleted — skipping.`);
+      return;
+    }
+    console.error(`Failed to delete branch "${branchName}": ${err.message}`);
+  }
+}

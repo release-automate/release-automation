@@ -5,6 +5,7 @@
  * Entry point:  scripts/prMerged.ts
  */
 
+import { deleteBranch } from '../services/github';
 import { extractTicketIds, transitionTicket } from '../services/jira';
 
 export interface PRMergedInput {
@@ -14,10 +15,11 @@ export interface PRMergedInput {
   merged:    boolean;
   baseBranch: string;  // must be "main" to trigger
   repo:      string;
+  headBranch: string; 
 }
 
 export async function handlePRMerged(input: PRMergedInput): Promise<void> {
-  const { prNumber, prTitle, prBody, merged, baseBranch } = input;
+  const { prNumber, prTitle, prBody, merged, baseBranch, repo, headBranch } = input;
 
   if (!merged) {
     console.log(`PR #${prNumber} was closed but NOT merged. Skipping.`);
@@ -47,4 +49,12 @@ export async function handlePRMerged(input: PRMergedInput): Promise<void> {
       )
     )
   );
+  // 2. Delete the merged branch (only feature/* and defect/*)
+  const shouldDelete = /^(feature|defect)\//i.test(headBranch);
+
+  if (shouldDelete) {
+    await deleteBranch(repo, headBranch);
+  } else {
+    console.log(`Skipping branch deletion for "${headBranch}" — not a feature or defect branch.`);
+  }
 }
