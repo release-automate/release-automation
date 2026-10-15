@@ -29,20 +29,33 @@ export async function handleBranchCreated(input: BranchCreatedInput): Promise<vo
 
   console.log(`Branch "${branchName}" → tickets: ${ticketIds.join(', ')}`);
 
-  // Process each ticket independently — one failure must not stop the others
-  await Promise.allSettled(
-    ticketIds.map(id => processSingleTicket(id, branchName))
+  // Process all tickets independently — collect results
+  const results = await Promise.allSettled(
+    ticketIds.map(id => processSingleTicket(id))
   );
+
+  // Check if any ticket failed validation
+  const anyFailed = results.some(r => r.status === 'rejected');
+
+  if (anyFailed) {
+    console.error('One or more tickets failed validation — exiting with failure');
+    process.exit(1); 
+  }
+
+  console.log('All tickets processed successfully');
 }
 
-async function processSingleTicket(ticketId: string, branchName: string): Promise<void> {
-  // 1. Fetch ticket details — catch separately so one bad ticket doesn't stop others
+// Returns normally on success
+// Throws on validation failure or fetch error — caught by Promise.allSettled
+async function processSingleTicket(ticketId: string): Promise<void> {
+
+  // 1. Fetch ticket
   let ticket;
   try {
     ticket = await getTicket(ticketId);
   } catch (err) {
     console.error(`Failed to fetch ticket ${ticketId}: ${(err as Error).message}`);
-    return;   // skip this ticket — can't validate without data
+    throw err;   // ← rethrow so allSettled marks this as rejected
   }
 
   // 2. Validate
@@ -50,33 +63,37 @@ async function processSingleTicket(ticketId: string, branchName: string): Promis
   try {
     result = validateTicket(ticket);
   } catch (err) {
-    console.error(`Failed to validate ticket ${ticketId}: ${(err as Error).message}`);
-    return;
+    console.error(`Failed to validate ${ticketId}: ${(err as Error).message}`);
+    throw err;   // ← rethrow
   }
 
-  // 3. Validation failed — post comment and block transition
+  // 3. Validation failed — post comment and throw
   if (!result.valid) {
-    console.log(`${ticketId} failed validation — blocking transition`);
+    console.error(`${ticketId} failed validation — blocking transition`);
     result.errors.forEach(e => console.error(`   ${e.field}: ${e.message}`));
 
     try {
       const comment = formatValidationComment(ticket, result, 'jira');
       await addComment(ticketId, comment);
+      console.log(`Validation failure comment posted on ${ticketId}`);
     } catch (err) {
       console.error(`Failed to post comment on ${ticketId}: ${(err as Error).message}`);
     }
-    return;   // do NOT transition
+
+    throw new Error(`${ticketId} failed validation`);   // ← throw so allSettled marks as rejected
   }
 
   // 4. Log warnings (non-blocking)
   if (result.warnings.length > 0) {
-    console.log(`${ticketId} has warnings: ${result.warnings.map(w => w.field).join(', ')}`);
+    console.log(`${ticketId} warnings: ${result.warnings.map(w => w.field).join(', ')}`);
   }
 
   // 5. All good — transition
   try {
     await transitionTicket(ticketId, 'In Progress');
+    console.log(`${ticketId} → In Progress`);
   } catch (err) {
     console.error(`Failed to transition ${ticketId}: ${(err as Error).message}`);
+    throw err;
   }
 }

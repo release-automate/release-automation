@@ -25,11 +25,29 @@ export async function handlePRValidation(
   const ticketIds = extractTicketIds(`${prTitle} ${prBody}`);
 
   if (ticketIds.length === 0) {
-    console.log("⚠️  No JIRA ticket IDs found in PR title or body.");
+    console.log("No JIRA ticket IDs found in PR title or body.");
     console.log(
       "    Add the ticket ID to the PR title e.g. [PROJ-123] My feature"
     );
-    return;
+    // Post comment on PR explaining why it is blocked
+    await addGitHubPRComment(repo, prNumber,
+      [
+        '## PR Blocked — No JIRA Ticket Found',
+        '',
+        'No JIRA ticket ID was found in the PR title or body.',
+        '',
+        '**Fix:** Add the ticket ID to your PR title:',
+        '```',
+        '[SCRUM-123] Your PR title here',
+        '```',
+        'Or mention it in the PR body:',
+        '```',
+        'Closes SCRUM-123',
+        '```',
+      ].join('\n')
+    ).catch(e => console.warn('Could not post PR comment:', e.message));
+
+    process.exit(1);   // ← blocks merge
   }
 
   console.log(`Found tickets: ${ticketIds.join(", ")}`);
@@ -38,7 +56,15 @@ export async function handlePRValidation(
   const summary: string[] = [];
 
   for (const id of ticketIds) {
-    const ticket = await getTicket(id);
+    let ticket;
+
+    try {
+      ticket = await getTicket(id);
+    } catch (err) {
+      console.error(`Could not fetch ticket ${id}: ${(err as Error).message}`);
+      allValid = false;
+      continue;
+    }
     const result = validateTicket(ticket);
 
     if (!result.valid) {
@@ -61,7 +87,7 @@ export async function handlePRValidation(
         `**${id}**: ${result.errors.map((e) => e.field).join(", ")}`
       );
     } else {
-      console.log(`\n✅ ${id} — all fields valid`);
+      console.log(`\n${id} — all fields valid`);
       if (result.warnings.length > 0) {
         result.warnings.forEach((w) =>
           console.log(`   ${w.field}: ${w.message}`)
@@ -92,6 +118,10 @@ export async function handlePRValidation(
       console.warn(`Could not comment on PR: ${err.message}`)
     );
 
-    return;
+    console.error('\nValidation failed — blocking merge');
+    process.exit(1);
   }
+
+  console.log('\n✅ All tickets passed — merge is allowed');
+  process.exit(0); 
 }
