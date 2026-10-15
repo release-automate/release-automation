@@ -51,8 +51,8 @@ async function jiraFetch(path: string, init?: RequestInit) {
 export async function getTicket(ticketId: string): Promise<JiraTicket> {
   const data = await jiraFetch(
     `/issue/${ticketId}?fields=summary,issuetype,status,assignee,` +
-    `customfield_10016,description,customfield_10014,` +  
-    `customfield_10068,priority,fixVersions`              
+    `customfield_10016,description,customfield_10045,` +  
+    `parent,priority,fixVersions`              
   );
   return {
     id:                 data.id,
@@ -64,8 +64,8 @@ export async function getTicket(ticketId: string): Promise<JiraTicket> {
     points:             data.fields.customfield_10016 ?? null,
     url:                `${BASE}/browse/${data.key}`,
     description:        data.fields.description?.content?.[0]?.content?.[0]?.text ?? null,
-    acceptanceCriteria: data.fields.customfield_10068 ?? null,
-    epicLink:           data.fields.customfield_10014 ?? null,
+    acceptanceCriteria: data.fields.customfield_10045?.content?.[0]?.content?.[0]?.text ?? null,
+    epicLink:           data.fields.parent?.key ?? null,
     priority:           data.fields.priority?.name ?? null,
     fixVersion:         data.fields.fixVersions?.[0]?.name ?? null,
   };
