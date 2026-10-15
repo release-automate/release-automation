@@ -42,13 +42,17 @@ export async function handlePRMerged(input: PRMergedInput): Promise<void> {
 
   console.log(`PR #${prNumber} merged → tickets: ${ticketIds.join(', ')}`);
 
-  await Promise.all(
-    ticketIds.map(id =>
-      transitionTicket(id, 'Ready for Testing').catch(err =>
-        console.error(`Failed to transition ${id}: ${err.message}`)
-      )
-    )
+  const transitionResults = await Promise.allSettled(
+    ticketIds.map(id => transitionTicket(id, 'Ready for Testing'))
   );
+  
+  transitionResults.forEach((result, index) => {
+    if (result.status === 'fulfilled') {
+      console.log(`✅ ${ticketIds[index]} → Ready for Testing`);
+    } else {
+      console.error(`❌ Failed to transition ${ticketIds[index]}: ${result.reason?.message ?? result.reason}`);
+    }
+  });
   // 2. Delete the merged branch (only feature/* and defect/*)
   const shouldDelete = /^(feature|defect)\//i.test(headBranch);
 

@@ -42,13 +42,17 @@ export async function handleReleaseDocGen(input: ReleaseDocGenInput): Promise<st
   console.log(`  ✓ Confluence page: ${page.webUrl}`);
 
   // 5. Post the page URL as a comment on each JIRA ticket
-  await Promise.all(
-    tickets.map(t =>
-      addComment(t.key, `Release document created: ${page.webUrl}`).catch(err =>
-        console.error(`Failed to comment on ${t.key}: ${err.message}`)
-      )
-    )
+  const commentResults = await Promise.allSettled(
+    tickets.map(t => addComment(t.key, `Release document created: ${page.webUrl}`))
   );
+  
+  commentResults.forEach((result, index) => {
+    if (result.status === 'fulfilled') {
+      console.log(`✅ Comment posted on ${tickets[index].key}`);
+    } else {
+      console.error(`❌ Failed to comment on ${tickets[index].key}: ${result.reason?.message ?? result.reason}`);
+    }
+  });
   console.log(`  ✓ Commented Confluence URL on ${tickets.length} JIRA tickets`);
 
   return page.webUrl;

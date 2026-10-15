@@ -46,11 +46,15 @@ export async function handleReleaseDeploy(input: ReleaseDeployInput): Promise<vo
   console.log(`  Tickets to accept: ${ticketIds.join(', ')}`);
 
   // Transition all found tickets to "Accepted"
-  await Promise.all(
-    ticketIds.map(id =>
-      transitionTicket(id, 'Accepted').catch(err =>
-        console.error(`  Failed to transition ${id}: ${err.message}`)
-      )
-    )
+  const acceptResults = await Promise.allSettled(
+    ticketIds.map(id => transitionTicket(id, 'Accepted'))
   );
+  
+  acceptResults.forEach((result, index) => {
+    if (result.status === 'fulfilled') {
+      console.log(`✅ ${ticketIds[index]} → Accepted`);
+    } else {
+      console.error(`❌ Failed to transition ${ticketIds[index]}: ${result.reason?.message ?? result.reason}`);
+    }
+  });
 }

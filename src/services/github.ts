@@ -69,25 +69,37 @@ export async function findPRsForTickets(
   });
 
   // Fetch diff for each matched PR in parallel (cap at 10 to avoid rate limits)
-  const results = await Promise.all(
+  const diffResults = await Promise.allSettled(
     matched.slice(0, 10).map(async pr => {
       const diff = await getPRDiff(owner, repoName, pr.number);
       return {
         number:       pr.number,
         title:        pr.title,
-        body:         pr.body ?? '',
-        author:       pr.user?.login ?? 'unknown',
-        mergedAt:     pr.merged_at ?? '',
+        body:         pr.body         ?? '',
+        author:       pr.user?.login  ?? 'unknown',
+        mergedAt:     pr.merged_at    ?? '',
         url:          pr.html_url,
         repo:         `${owner}/${repoName}`,
-        diff:         diff.slice(0, 8000),  // cap diff size sent to LLM
+        diff:         diff.slice(0, 8000),
         filesChanged: pr.changed_files ?? 0,
-        additions:    pr.additions ?? 0,
-        deletions:    pr.deletions ?? 0,
+        additions:    pr.additions     ?? 0,
+        deletions:    pr.deletions     ?? 0,
       } satisfies PullRequest;
     })
   );
-
+  
+  const results: PullRequest[] = [];
+  
+  diffResults.forEach((result, index) => {
+    if (result.status === 'fulfilled') {
+      results.push(result.value);
+    } else {
+      console.error(
+        `Failed to fetch diff for PR #${matched[index]?.number}: ${result.reason?.message ?? result.reason}`
+      );
+    }
+  });
+  
   return results;
 }
 
@@ -99,9 +111,23 @@ export async function findPRsAcrossOrg(
   ticketIds: string[],
   repos:     string[],
 ): Promise<PullRequest[]> {
-  const allPRs = await Promise.all(
-    repos.map(repo => findPRsForTickets(repo, ticketIds).catch(() => [] as PullRequest[]))
+  const repoResults = await Promise.allSettled(
+    repos.map(repo => findPRsForTickets(repo, ticketIds))
   );
+  
+  const allPRs: PullRequest[] = [];
+  
+  repoResults.forEach((result, index) => {
+    if (result.status === 'fulfilled') {
+      console.log(`✅ ${repos[index]} — found ${result.value.length} PR(s)`);
+      allPRs.push(...result.value);
+    } else {
+      console.error(
+        `Failed to fetch PRs from ${repos[index]}: ${result.reason?.message ?? result.reason}`
+      );
+    }
+  });
+  
   return allPRs.flat();
 }
 
