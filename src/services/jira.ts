@@ -79,7 +79,7 @@ export async function searchTicketsByStatus(status: string): Promise<JiraTicket[
   const jql = `project = ${config.JIRA_PROJECT_KEY} AND status = "${status}" ORDER BY updated DESC`;
 
   const data = await jiraFetch(
-    `/search?jql=${encodeURIComponent(jql)}&fields=summary,issuetype,status,assignee,customfield_10016,customfield_10068,customfield_10014,description,priority,fixVersions&maxResults=50`
+    `/search/jql?jql=${encodeURIComponent(jql)}&fields=summary,issuetype,status,assignee,customfield_10016,customfield_10068,customfield_10014,description,priority,fixVersions&maxResults=50`
   );
 
   return (data.issues as any[]).map(issue => ({
