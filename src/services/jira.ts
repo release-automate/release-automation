@@ -71,6 +71,34 @@ export async function getTicket(ticketId: string): Promise<JiraTicket> {
   };
 }
 
+/**
+ * Search for tickets by status using JIRA Query Language (JQL).
+ * Used by the poller to find "Ready to Accept" tickets.
+ */
+export async function searchTicketsByStatus(status: string): Promise<JiraTicket[]> {
+  const jql = `project = ${config.JIRA_PROJECT_KEY} AND status = "${status}" ORDER BY updated DESC`;
+
+  const data = await jiraFetch(
+    `/search?jql=${encodeURIComponent(jql)}&fields=summary,issuetype,status,assignee,customfield_10016,customfield_10068,customfield_10014,description,priority,fixVersions&maxResults=50`
+  );
+
+  return (data.issues as any[]).map(issue => ({
+    id:                 issue.id,
+    key:                issue.key,
+    summary:            issue.fields.summary,
+    type:               issue.fields.issuetype.name,
+    status:             issue.fields.status.name,
+    owner:              issue.fields.assignee?.displayName ?? 'Unassigned',
+    points:             issue.fields.customfield_10016     ?? null,
+    url:                `${config.JIRA_BASE_URL}/browse/${issue.key}`,
+    description:        data.fields.description?.content?.[0]?.content?.[0]?.text ?? null,
+    acceptanceCriteria: data.fields.customfield_10045?.content?.[0]?.content?.[0]?.text ?? null,
+    epicLink:           data.fields.parent?.key ?? null,
+    priority:           issue.fields.priority?.name        ?? null,
+    fixVersion:         issue.fields.fixVersions?.[0]?.name ?? null,
+  }));
+}
+
 /** Fetch multiple tickets in parallel. */
 export async function getTickets(ticketIds: string[]): Promise<JiraTicket[]> {
   return Promise.all(ticketIds.map(getTicket));

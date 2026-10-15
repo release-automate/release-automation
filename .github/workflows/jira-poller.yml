@@ -1,0 +1,57 @@
+# release-automation/.github/workflows/jira-poller.yml
+
+name: JIRA Poller (Flow 3)
+
+on:
+  workflow_dispatch:           # ← manual trigger only — run whenever you need it
+    inputs:
+      release_version:
+        description: 'Release version e.g. v1.3.0'
+        required: true
+        default: 'v1.0.0'
+      gh_repos:
+        description: 'Comma-separated repos e.g. org/repo1,org/repo2'
+        required: true
+        default: 'release-automate/sample-repo'
+
+jobs:
+  poll-jira:
+    name: Check for Ready to Accept tickets
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout hub repo
+        uses: actions/checkout@v4
+        with:
+          repository: release-automate/release-automation
+          ref: main
+          token: ${{ secrets.GH_TOKEN }}
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 9
+
+      - run: pnpm install --frozen-lockfile
+
+      - name: Poll JIRA and generate release doc
+        env:
+          JIRA_BASE_URL:    ${{ secrets.JIRA_BASE_URL }}
+          JIRA_EMAIL:       ${{ secrets.JIRA_EMAIL }}
+          JIRA_API_TOKEN:   ${{ secrets.JIRA_API_TOKEN }}
+          JIRA_PROJECT_KEY: ${{ secrets.JIRA_PROJECT_KEY }}
+          GH_TOKEN:         ${{ secrets.GH_TOKEN }}
+          GH_ORG:           ${{ secrets.GH_ORG }}
+          OPENAI_API_KEY:   ${{ secrets.OPENAI_API_KEY }}
+          CONFLUENCE_BASE_URL:       ${{ secrets.CONFLUENCE_BASE_URL }}
+          CONFLUENCE_EMAIL:          ${{ secrets.CONFLUENCE_EMAIL }}
+          CONFLUENCE_API_TOKEN:      ${{ secrets.CONFLUENCE_API_TOKEN }}
+          CONFLUENCE_SPACE_KEY:      ${{ secrets.CONFLUENCE_SPACE_KEY }}
+          CONFLUENCE_PARENT_PAGE_ID: ${{ secrets.CONFLUENCE_PARENT_PAGE_ID }}
+          # Use inputs if provided, fall back to org secrets
+          RELEASE_VERSION: ${{ inputs.release_version }}
+          GH_REPOS:        ${{ inputs.gh_repos }}
+        run: pnpm tsx scripts/pollJira.ts
