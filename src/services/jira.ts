@@ -126,9 +126,9 @@ export async function searchTicketsByStatus(
       owner: issue.fields.assignee?.displayName ?? "Unassigned",
       points: issue.fields.customfield_10016 ?? null,
       url: `${config.JIRA_BASE_URL}/browse/${issue.key}`,
-      description: extractText(data.fields.description),
-      acceptanceCriteria: extractText(data.fields.customfield_10045),
-      epicLink: data.fields.parent?.key ?? null,
+      description: extractText(issue.fields.description),
+      acceptanceCriteria: extractText(issue.fields.customfield_10045),
+      epicLink: issue.fields.parent?.key ?? null,
       priority: issue.fields.priority?.name ?? null,
       fixVersion: issue.fields.fixVersions?.[0]?.name ?? null,
     }));
