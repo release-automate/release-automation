@@ -1,6 +1,6 @@
 # release-automation/.github/workflows/jira-poller.yml
 
-name: JIRA Poller (Flow 3)
+name: Flow 4 - Generate Release Document
 
 on:
   workflow_dispatch:           # ← manual trigger only — run whenever you need it

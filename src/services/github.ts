@@ -199,3 +199,49 @@ export async function deleteBranch(
     console.error(`Failed to delete branch "${branchName}": ${err.message}`);
   }
 }
+
+/**
+ * Get the last merged PR into a branch.
+ * Used during release deployment to find the latest PR description.
+ */
+export async function getLastMergedPR(
+  repo:   string,
+  branch: string,
+): Promise<{ title: string; body: string; number: number; author: string; mergedAt: string } | null> {
+  const [owner, repoName] = repo.includes('/')
+    ? repo.split('/', 2) as [string, string]
+    : [config.GH_ORG, repo];
+
+  console.log(`[GitHub] Fetching last merged PR into "${branch}" in ${owner}/${repoName}`);
+
+  // Fetch closed PRs targeting this branch, sorted by most recently updated
+  const { data: prs } = await octokit.pulls.list({
+    owner,
+    repo:      repoName,
+    state:     'closed',
+    base:      branch,          // PRs merged INTO this branch
+    per_page:  1,               // only need the last one
+    sort:      'updated',
+    direction: 'desc',
+  });
+
+  // Filter to only merged PRs (closed includes both merged and unmerged)
+  const merged = prs.filter(pr => pr.merged_at);
+
+  if (merged.length === 0) {
+    console.log(`[GitHub] No merged PRs found for branch "${branch}"`);
+    return null;
+  }
+
+  const last = merged[0]!;
+
+  console.log(`[GitHub] Last merged PR: #${last.number} — "${last.title}"`);
+
+  return {
+    number:   last.number,
+    title:    last.title,
+    body:     last.body     ?? '',
+    author:   last.user?.login ?? 'unknown',
+    mergedAt: last.merged_at  ?? '',
+  };
+}

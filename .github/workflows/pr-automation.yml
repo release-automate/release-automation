@@ -1,4 +1,4 @@
-name: PR Automation (Flow 2 — Ready for Testing)
+name: Flow 5 — JIRA Ticket to Accepted)
 
 on:
   workflow_call:
@@ -41,7 +41,7 @@ on:
 
 jobs:
   jira-ready-for-testing:
-    name: Move JIRA ticket → Ready for Testing
+    name: Move JIRA ticket → Accepted
     runs-on: ubuntu-latest
 
     steps:

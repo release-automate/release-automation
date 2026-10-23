@@ -20,7 +20,7 @@ export async function handlePRMerged(input: PRMergedInput): Promise<void> {
     return;
   }
 
-  // ── Case 1: feature/defect → release branch ──────────────────────────────
+  /* // ── Case 1: feature/defect → release branch ──────────────────────────────
   // Transition ticket to "Ready for Testing"
   if (baseBranch.startsWith("release.")) {
     console.log(
@@ -34,6 +34,15 @@ export async function handlePRMerged(input: PRMergedInput): Promise<void> {
       repo,
     });
     return;
+  } */
+
+  // Delete Head Branch if PR is merged to release branch
+  if(baseBranch.startsWith("release.")) {
+    // Delete the feature/defect branch after merge
+    const shouldDelete = /^(feature|defect)\//i.test(headBranch);
+    if (shouldDelete) {
+      await deleteBranch(repo, headBranch);
+    }
   }
 
   // ── Case 2: release → main ────────────────────────────────────────────────
@@ -50,7 +59,7 @@ export async function handlePRMerged(input: PRMergedInput): Promise<void> {
 }
 
 // ── Flow 2: feature/defect merged → release ───────────────────────────────
-
+/* 
 async function handleFeatureToRelease(input: {
   prNumber: number;
   prTitle: string;
@@ -91,9 +100,9 @@ async function handleFeatureToRelease(input: {
   if (shouldDelete) {
     await deleteBranch(repo, headBranch);
   }
-}
+} */
 
-// ── Flow 4: release merged → main ────────────────────────────────────────
+// ── Flow 5: release merged → main ────────────────────────────────────────
 
 async function handleReleaseToMain(input: {
   prNumber: number;

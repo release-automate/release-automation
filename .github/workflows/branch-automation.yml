@@ -1,4 +1,4 @@
-name: Branch Automation (Flow 1 — In Progress)
+name: Flow 1 — JIRA Ticket to In Progress
 
 on:
   workflow_call:

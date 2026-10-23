@@ -1,3 +1,12 @@
+/**
+ * Entry point for Flow 4 — called by Manual Workflow event.
+ *
+ * Required env vars:
+ *   GH_REPOS          input.gh_repos
+ *   RELEASE_VERSION   input.release_Version
+ *   BASE_BRANCH       input.base_branch
+ */
+
 import '../src/config';
 import { handleJiraPoll } from '../src/handlers/pollJira';
 

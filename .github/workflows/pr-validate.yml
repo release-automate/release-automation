@@ -1,6 +1,6 @@
 # release-automation/.github/workflows/pr-validate.yml
 
-name: PR Ticket Validation (Flow 5)
+name: Flow 2 - PR & JIRA Ticket Validation
 
 on:
   workflow_call:

@@ -1,10 +1,10 @@
-name: Deploy Automation (Flow 4 — Accepted)
+name: Flow 3 — JIRA Ticket to Ready For Testing
 
 on:
   workflow_call:
     inputs:
       ref:
-        description: 'github.ref, e.g. refs/heads/release/v2.4.0'
+        description: 'github.ref, e.g. refs/heads/release.2026.10.01'
         type: string
         required: true
       repo_name:
@@ -25,11 +25,11 @@ on:
       OPENAI_API_KEY:            { required: false }
 
 jobs:
-  jira-accepted:
-    name: Move JIRA tickets → Accepted
+  jira-ready-for-testing:
+    name: Move JIRA tickets → Ready For Testing
     runs-on: ubuntu-latest
     # Only run on release/* branches (guard here too in case caller is misconfigured)
-    if: startsWith(inputs.ref, 'refs/heads/release/')
+    if: startsWith(inputs.ref, 'refs/heads/release.')
 
     steps:
       - name: Checkout hub repo

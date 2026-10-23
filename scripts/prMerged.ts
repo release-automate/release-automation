@@ -1,5 +1,5 @@
 /**
- * Entry point for Flow 2 — called by GitHub Actions on `pull_request` closed event.
+ * Entry point for Flow 5 — called by GitHub Actions on `pull_request` closed event.
  *
  * Required env vars:
  *   PR_NUMBER     github.event.pull_request.number

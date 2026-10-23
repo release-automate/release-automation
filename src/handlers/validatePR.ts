@@ -122,6 +122,6 @@ export async function handlePRValidation(
     process.exit(1);
   }
 
-  console.log('\n✅ All tickets passed — merge is allowed');
+  console.log('\nAll tickets passed — merge is allowed');
   process.exit(0); 
 }
