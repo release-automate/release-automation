@@ -13,6 +13,10 @@ on:
         description: 'Comma-separated repos e.g. org/repo1,org/repo2'
         required: true
         default: 'release-automate/sample-repo'
+      base_branch:
+        description: 'Release Branch'
+        required: true
+        default: 'release.2026.10.01'
 
 jobs:
   poll-jira:
@@ -54,4 +58,5 @@ jobs:
           # Use inputs if provided, fall back to org secrets
           RELEASE_VERSION: ${{ inputs.release_version }}
           GH_REPOS:        ${{ inputs.gh_repos }}
+          BASE_BRANCH: ${{input.base_branch}}
         run: pnpm tsx scripts/pollJira.ts

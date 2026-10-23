@@ -9,9 +9,9 @@
  */
 
 import express, { type Request, type Response } from 'express';
-import crypto                                    from 'node:crypto';
+//import crypto                                    from 'node:crypto';
 import { config }                                from './config';
-import { handleReleaseDocGen }                   from './handlers/releaseDocGen';
+//import { handleReleaseDocGen }                   from './handlers/releaseDocGen';
 
 const app = express();
 
@@ -22,7 +22,7 @@ app.use(express.json({
   },
 }));
 
-// ── Signature verification ─────────────────────────────────────
+/* // ── Signature verification ─────────────────────────────────────
 
 function verifyJiraSignature(req: Request & { rawBody?: Buffer }): boolean {
   // JIRA Cloud webhooks send X-Hub-Signature (SHA-256)
@@ -36,7 +36,7 @@ function verifyJiraSignature(req: Request & { rawBody?: Buffer }): boolean {
     .update(req.rawBody ?? '')
     .digest('hex');
   return crypto.timingSafeEqual(Buffer.from(signature), Buffer.from(expected));
-}
+} */
 
 // ── Health check ───────────────────────────────────────────────
 
@@ -45,13 +45,13 @@ app.get('/health', (_req, res) => {
 });
 
 // ── JIRA webhook endpoint ──────────────────────────────────────
-
+/* 
 app.post('/webhook/jira', async (req: Request & { rawBody?: Buffer }, res: Response) => {
   // Respond immediately — JIRA webhooks time out after 10 seconds
   res.status(202).json({ received: true });
 
   if (!verifyJiraSignature(req)) {
-    console.warn('⚠️  Invalid JIRA webhook signature — ignoring event.');
+    console.warn('Invalid JIRA webhook signature — ignoring event.');
     return;
   }
 
@@ -88,7 +88,7 @@ app.post('/webhook/jira', async (req: Request & { rawBody?: Buffer }, res: Respo
   } catch (err) {
     console.error('[Flow 3] Error generating release doc:', err);
   }
-});
+}); */
 
 // ── GitHub webhook endpoint (optional — alternative to Actions) ──
 

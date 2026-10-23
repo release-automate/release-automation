@@ -4,10 +4,11 @@ import { handleReleaseDocGen } from "./releaseDocGen";
 export interface PollJiraInput {
   repos: string[];
   version: string;
+  releaseBranch: string
 }
 
 export async function handleJiraPoll(input: PollJiraInput): Promise<void> {
-  const { repos, version } = input;
+  const { repos, version, releaseBranch } = input;
 
   console.log(
     `[Poller] ${new Date().toISOString()} — Searching for "Ready to Accept" tickets...`
@@ -26,6 +27,7 @@ export async function handleJiraPoll(input: PollJiraInput): Promise<void> {
     ticketIds: tickets.map((t) => t.key),
     version,
     repos,
+    releaseBranch
   });
 
   console.log("[Poller] Done.");

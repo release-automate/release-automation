@@ -31,7 +31,7 @@ export async function handleReleaseDeploy(input: ReleaseDeployInput): Promise<vo
   console.log(`[Flow 4] Release deploy detected: ${branch} in ${repo}`);
 
   // Fetch all commits on this branch that are not yet on main
-  const commits = await getCommitsOnBranch(repo, branch);
+  const commits = await getCommitsOnBranch(repo, branch, 'main');
   console.log(`  Found ${commits.length} commits on ${branch}`);
 
   // Extract all unique ticket IDs from every commit message
@@ -52,9 +52,9 @@ export async function handleReleaseDeploy(input: ReleaseDeployInput): Promise<vo
   
   acceptResults.forEach((result, index) => {
     if (result.status === 'fulfilled') {
-      console.log(`✅ ${ticketIds[index]} → Accepted`);
+      console.log(`${ticketIds[index]} → Accepted`);
     } else {
-      console.error(`❌ Failed to transition ${ticketIds[index]}: ${result.reason?.message ?? result.reason}`);
+      console.error(`Failed to transition ${ticketIds[index]}: ${result.reason?.message ?? result.reason}`);
     }
   });
 }

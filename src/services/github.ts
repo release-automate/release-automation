@@ -42,7 +42,7 @@ async function getPRDiff(owner: string, repo: string, pull_number: number): Prom
 export async function findPRsForTickets(
   repo:      string,
   ticketIds: string[],
-  baseBranch = 'main',
+  baseBranch: string
 ): Promise<PullRequest[]> {
   const [owner, repoName] = repo.includes('/')
     ? repo.split('/', 2) as [string, string]
@@ -110,9 +110,10 @@ export async function findPRsForTickets(
 export async function findPRsAcrossOrg(
   ticketIds: string[],
   repos:     string[],
+  baseBranch: string
 ): Promise<PullRequest[]> {
   const repoResults = await Promise.allSettled(
-    repos.map(repo => findPRsForTickets(repo, ticketIds))
+    repos.map(repo => findPRsForTickets(repo, ticketIds, baseBranch))
   );
   
   const allPRs: PullRequest[] = [];
@@ -138,7 +139,7 @@ export async function findPRsAcrossOrg(
 export async function getCommitsOnBranch(
   repo:   string,
   branch: string,
-  base =  'main',
+  base: string
 ): Promise<{ sha: string; message: string }[]> {
   const [owner, repoName] = repo.includes('/')
     ? repo.split('/', 2) as [string, string]
