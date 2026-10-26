@@ -40,12 +40,12 @@ export async function handleReleaseDeploy(input: ReleaseDeployInput): Promise<vo
 
   // Transition all found tickets to "Accepted"
   const acceptResults = await Promise.allSettled(
-    ticketIds.map(id => transitionTicket(id, 'Accepted'))
+    ticketIds.map(id => transitionTicket(id, 'Ready for Testing'))
   );
   
   acceptResults.forEach((result, index) => {
     if (result.status === 'fulfilled') {
-      console.log(`${ticketIds[index]} → Accepted`);
+      console.log(`${ticketIds[index]} → Ready for Testing`);
     } else {
       console.error(`Failed to transition ${ticketIds[index]}: ${result.reason?.message ?? result.reason}`);
     }
