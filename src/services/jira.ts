@@ -46,6 +46,7 @@ async function jiraFetch(path: string, init?: RequestInit) {
       `JIRA ${init?.method ?? "GET"} ${path} → ${res.status}: ${body}`
     );
   }
+  console.log(`Response: ${res}, path: ${path}`);
   return res.json();
 }
 
@@ -186,10 +187,14 @@ export async function transitionTicket(
     );
   }
 
+  console.log("Before Transition");
+
   await jiraFetch(`/issue/${ticketId}/transitions`, {
     method: "POST",
     body: JSON.stringify({ transition: { id: transition.id } }),
   });
+
+  console.log("After Transition");
 
   console.log(`✅ ${ticketId} → "${targetStatus}"`);
 }

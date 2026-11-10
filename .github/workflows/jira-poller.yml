@@ -1,5 +1,3 @@
-# release-automation/.github/workflows/jira-poller.yml
-
 name: Flow 4 - Generate Release Document
 
 on:
@@ -58,5 +56,5 @@ jobs:
           # Use inputs if provided, fall back to org secrets
           RELEASE_VERSION: ${{ inputs.release_version }}
           GH_REPOS:        ${{ inputs.gh_repos }}
-          BASE_BRANCH: ${{input.base_branch}}
+          BASE_BRANCH: ${{inputs.base_branch}}
         run: pnpm tsx scripts/pollJira.ts
