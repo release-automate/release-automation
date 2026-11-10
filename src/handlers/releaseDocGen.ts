@@ -23,7 +23,7 @@ export interface ReleaseDocGenInput {
 
 export async function handleReleaseDocGen(input: ReleaseDocGenInput): Promise<string> {
   const { ticketIds, version, repos, releaseBranch  } = input;
-
+  console.log(`Release Branch ${releaseBranch}`);
   console.log(`[Flow 3] Generating release doc for ${version} — tickets: ${ticketIds.join(', ')}`);
 
   // 1. Fetch full ticket data from JIRA
