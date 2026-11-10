@@ -40,14 +40,34 @@ async function jiraFetch(path: string, init?: RequestInit) {
     ...init,
     headers: { ...HEADERS, ...(init?.headers ?? {}) },
   });
+
+  const body = await res.text();
+
+  console.log({
+    method: init?.method ?? "GET",
+    path,
+    status: res.status,
+    contentType: res.headers.get("content-type"),
+    body,
+  });
+
   if (!res.ok) {
-    const body = await res.text();
     throw new Error(
-      `JIRA ${init?.method ?? "GET"} ${path} → ${res.status}: ${body}`
+      `JIRA ${init?.method ?? "GET"} ${path} -> ${res.status}: ${body}`
     );
   }
-  console.log(`Response: ${JSON.stringify(res)}, path: ${path}`);
-  return res.json();
+
+  if (!body.trim()) {
+    return null;
+  }
+
+  const contentType = res.headers.get("content-type");
+
+  if (contentType?.includes("application/json")) {
+    return JSON.parse(body);
+  }
+
+  return body;
 }
 
 // ── Public API ─────────────────────────────────────────────────
