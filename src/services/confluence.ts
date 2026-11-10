@@ -149,17 +149,16 @@ export async function createReleasePage(
       title,
       content
     );
+  } else {
+    console.log(
+      `Confluence page "${title}" not found. Creating...`
+    );
+
+    res = await createConfluencePage(
+      title,
+      content
+    );
   }
-
-  console.log(
-    `Confluence page "${title}" not found. Creating...`
-  );
-
-  res = await createConfluencePage(
-    title,
-    content
-  );
-
 
   if (!res.ok) {
     const body = await res.text();
