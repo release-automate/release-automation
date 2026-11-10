@@ -141,7 +141,7 @@ export async function getCommitsOnBranch(
   branch: string,
   base: string
 ): Promise<{ sha: string; message: string }[]> {
-  console.log(`Repo: ${repo}, GH_ORG: ${config.GH_ORG}`)
+  console.log(`Repo: ${repo}, GH_ORG: ${config.GH_ORG}, base: ${base}, branch: ${branch}`)
   const [owner, repoName] = repo.includes('/')
     ? repo.split('/', 2) as [string, string]
     : [config.GH_ORG, repo];
