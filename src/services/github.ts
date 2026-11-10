@@ -1,5 +1,6 @@
 import { Octokit } from '@octokit/rest';
 import { config }  from '../config';
+import { extractTicketIds } from './jira';
 
 export const octokit = new Octokit({ auth: config.GH_TOKEN });
 
@@ -141,7 +142,7 @@ export async function getCommitsOnBranch(
   branch: string,
   base: string
 ): Promise<{ sha: string; message: string }[]> {
-  console.log(`Repo: ${repo}, GH_ORG: ${config.GH_ORG}, base: ${base}, branch: ${branch}`)
+  
   const [owner, repoName] = repo.includes('/')
     ? repo.split('/', 2) as [string, string]
     : [config.GH_ORG, repo];
@@ -151,13 +152,53 @@ export async function getCommitsOnBranch(
     repo:     repoName,
     basehead: `${base}...${branch}`,
   });
-  console.log(`Commit data: ${JSON.stringify(data.commits)}`);
 
   return (data.commits ?? []).map(c => ({
     sha:     c.sha,
     message: c.commit.message,
   }));
 }
+
+export async function getMergedChanges(
+  repo: string,
+  branch: string
+) {
+  const [owner, repoName] = repo.includes("/")
+    ? (repo.split("/", 2) as [string, string])
+    : [config.GH_ORG, repo];
+
+  // Get closed PRs targeting this release branch
+  const prs = await octokit.paginate(octokit.pulls.list, {
+    owner,
+    repo: repoName,
+    base: branch,
+    state: "closed",
+    per_page: 100,
+  });
+
+  // Keep only PRs that were actually merged
+  const mergedPRs = prs.filter(pr => pr.merged_at !== null);
+
+  console.log(
+    `Merged PRs into ${branch}:`,
+    mergedPRs.map(pr => ({
+      number: pr.number,
+      title: pr.title,
+      branch: pr.head.ref,
+      mergedAt: pr.merged_at,
+    }))
+  );
+
+  return mergedPRs.map(pr => ({
+    prNumber: pr.number,
+    title: pr.title,
+    branch: pr.head.ref,
+    mergedAt: pr.merged_at,
+    head: pr.head,
+    body: pr.body,
+  }));
+}
+
 
 // Post a comment on a GitHub PR
 export async function addGitHubPRComment(

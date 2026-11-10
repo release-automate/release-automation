@@ -1,5 +1,5 @@
 import { extractTicketIds, transitionTicket } from "../services/jira";
-import { deleteBranch, getCommitsOnBranch } from "../services/github";
+import { deleteBranch, getCommitsOnBranch, getMergedChanges } from "../services/github";
 
 export interface PRMergedInput {
   prNumber: number;
@@ -113,18 +113,11 @@ async function handleReleaseToMain(input: {
 }): Promise<void> {
   const { prTitle, prBody, headBranch, repo } = input;
 
-  const commits = await getCommitsOnBranch(repo, headBranch, 'main');
-  console.log(`  Found ${commits.length} commits on ${headBranch}`);
-
-  if(commits.length == 0) {
-    throw new Error(`No Commits found in ${headBranch}`);
-  }
-  // Extract all unique ticket IDs from every commit message
-  const allText  = commits.map(c => c.message).join('\n');
-
-  // Extract ticket IDs from PR title + body
-  // The release PR body should list all tickets included in the release
-  const ticketIds = extractTicketIds(allText);
+  const mergedPRs = await getMergedChanges(repo, headBranch);
+  
+  const ticketIds = mergedPRs.flatMap(pr =>
+    extractTicketIds(`${pr.title} ${pr.head.ref} ${pr.body ?? ""}`)
+  );
 
   if (ticketIds.length === 0) {
     console.log(
@@ -133,7 +126,7 @@ async function handleReleaseToMain(input: {
     console.log(
       `Tip: list all ticket IDs in the release PR body e.g. "Includes: PROJ-1, PROJ-2"`
     );
-    return;
+    throw new Error("Release PR has no ticket IDs — nothing to transition to Accepted.");
   }
 
   console.log(
