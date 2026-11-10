@@ -100,6 +100,6 @@ export async function generateReleaseDoc(
   if (!result.success) {
     throw new Error(`OpenAI response failed validation: ${result.error.message}`);
   }
-  console.log(`Parsed response from openAI ${result.data}`);
+  console.log(`Parsed response from openAI ${JSON.stringify(result.data)}`);
   return result.data;
 }
