@@ -35,7 +35,7 @@ export async function handleReleaseDocGen(input: ReleaseDocGenInput): Promise<st
   console.log(`Found ${prs.length} linked PRs across ${repos.length} repos`);
 
   // 3. Generate the release doc via OpenAI
-  const doc = await generateReleaseDoc(tickets, prs, version);
+  const doc = await generateReleaseDoc(tickets, prs, version, releaseBranch);
   console.log(`Release doc generated — ${doc.risks.length} risks identified`);
 
   // 4. Create the Confluence page

@@ -105,6 +105,21 @@ export interface ConfluencePage {
   webUrl: string;
 }
 
+interface Page {
+  id: string;
+  type: 'page';
+  title: string;
+  version?: {
+    number: number;
+  };
+  body?: {
+    storage?: {
+      value: string;
+      representation: string;
+    };
+  };
+}
+
 /**
  * Create a new Confluence page for this release.
  * Returns the page ID and URL.
@@ -121,8 +136,115 @@ export async function createReleasePage(
     console.log(`[DRY RUN] Would create Confluence page: "${title}"`);
     return { id: 'dry-run', title, webUrl: `${BASE}/dry-run` };
   }
+  const existingPage = await findConfluencePage(title);
+  let res;
 
-  const res = await fetch(`${BASE}/rest/api/content`, {
+  if (existingPage) {
+    console.log(
+      `Confluence page found: ${existingPage.id}. Updating...`
+    );
+
+    res = await updateConfluencePage(
+      existingPage,
+      title,
+      content
+    );
+  }
+
+  console.log(
+    `Confluence page "${title}" not found. Creating...`
+  );
+
+  res = await createConfluencePage(
+    title,
+    content
+  );
+
+
+  if (!res.ok) {
+    const body = await res.text();
+    throw new Error(`Confluence create/update page failed: ${res.status} — ${body}`);
+  }
+
+  const page = await res.json() as { id: string; title: string; _links: { webui: string } };
+  const webUrl = `${BASE}${page._links.webui}`;
+  console.log(`✅ Confluence page created: ${webUrl}`);
+  return { id: page.id, title: page.title, webUrl };
+}
+
+async function findConfluencePage(title: string) {
+  const params = new URLSearchParams({
+    spaceKey: config.CONFLUENCE_SPACE_KEY,
+    title,
+    expand: 'version,body.storage',
+  });
+
+  const res = await fetch(
+    `${BASE}/rest/api/content?${params.toString()}`,
+    {
+      method: 'GET',
+      headers: HEADERS,
+    }
+  );
+
+  if (!res.ok) {
+    const error = await res.text();
+    throw new Error(
+      `Failed to find Confluence page: ${res.status} ${error}`
+    );
+  }
+
+  const data = await res.json();
+
+  if (!data.results || data.results.length === 0) {
+    return null;
+  }
+
+  // Since we searched by exact title + space,
+  // return the matching page.
+  return data.results.find(
+    (page: Page) => page.title === title
+  ) ?? null;
+}
+
+async function updateConfluencePage(page: Page, title: string, content: string) {
+  const currentVersion = page.version?.number;
+
+  if (!currentVersion) {
+    throw new Error(
+      `Version information missing for Confluence page ${page.id}`
+    );
+  }
+
+  return await fetch(
+    `${BASE}/rest/api/content/${page.id}`,
+    {
+      method: 'PUT',
+      headers: HEADERS,
+      body: JSON.stringify({
+        id: page.id,
+        type: 'page',
+        title,
+        space: {
+          key: config.CONFLUENCE_SPACE_KEY,
+        },
+        body: {
+          storage: {
+            value: content,
+            representation: 'storage',
+          },
+        },
+        version: {
+          number: currentVersion + 1,
+          message: 'Release documentation updated automatically',
+        },
+      }),
+    }
+  );
+}
+
+async function createConfluencePage(title: string, content: string) {
+  return await fetch(`${BASE}/rest/api/content`, {
     method:  'POST',
     headers: HEADERS,
     body: JSON.stringify({
@@ -138,14 +260,4 @@ export async function createReleasePage(
       },
     }),
   });
-
-  if (!res.ok) {
-    const body = await res.text();
-    throw new Error(`Confluence create page failed: ${res.status} — ${body}`);
-  }
-
-  const page = await res.json() as { id: string; title: string; _links: { webui: string } };
-  const webUrl = `${BASE}${page._links.webui}`;
-  console.log(`✅ Confluence page created: ${webUrl}`);
-  return { id: page.id, title: page.title, webUrl };
 }

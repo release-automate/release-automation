@@ -22,7 +22,18 @@ export type ReleaseDoc = z.infer<typeof ReleaseDocSchema>;
 
 // ── Prompt builder ─────────────────────────────────────────────
 
-function buildPrompt(tickets: JiraTicket[], prs: PullRequest[], version: string): string {
+function getReleaseDate(branchName: string) {
+  const match = branchName.match(/^release\.(\d{4})\.(\d{2})\.(\d{2})$/);
+
+    if (!match) {
+      return null;
+    }
+
+    const [, year, month, day] = match;
+    return `${year}-${month}-${day}`;
+}
+
+function buildPrompt(tickets: JiraTicket[], prs: PullRequest[], version: string, releaseBranch: string): string {
   const ticketBlock = tickets.map(t =>
     `[${t.key}] (${t.type}) ${t.summary}\n  Owner: ${t.owner} | Points: ${t.points ?? 'N/A'}`
   ).join('\n');
@@ -32,6 +43,8 @@ function buildPrompt(tickets: JiraTicket[], prs: PullRequest[], version: string)
     `  +${pr.additions}/-${pr.deletions} lines across ${pr.filesChanged} files\n` +
     `  Diff (truncated):\n${pr.diff.split('\n').slice(0, 60).join('\n')}`
   ).join('\n\n---\n\n');
+
+  const date = getReleaseDate(releaseBranch);
 
   return `You are a senior release engineer. Analyse the following JIRA tickets and GitHub PR diffs for release ${version}.
 
@@ -44,7 +57,7 @@ ${prBlock}
 Based on the above, produce a JSON object (no markdown fences, pure JSON) matching exactly this shape:
 {
   "version":   "<release version string>",
-  "date":      "<today's ISO date>",
+  "date":      ${date},
   "summary":   "<2-4 sentences describing what this release delivers>",
   "risks":     ["<risk 1>", "<risk 2>", ...],
   "impact":    "<which services, APIs, or user flows are affected>",
@@ -73,8 +86,9 @@ export async function generateReleaseDoc(
   tickets: JiraTicket[],
   prs:     PullRequest[],
   version: string,
+  releaseBranch: string
 ): Promise<ReleaseDoc> {
-  const prompt = buildPrompt(tickets, prs, version);
+  const prompt = buildPrompt(tickets, prs, version, releaseBranch);
 
   const response = await openai.chat.completions.create({
     model:       config.OPENAI_MODEL,
