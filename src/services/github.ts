@@ -141,6 +141,7 @@ export async function getCommitsOnBranch(
   branch: string,
   base: string
 ): Promise<{ sha: string; message: string }[]> {
+  console.log(`Repo: ${repo}, GH_ORG: ${config.GH_ORG}`)
   const [owner, repoName] = repo.includes('/')
     ? repo.split('/', 2) as [string, string]
     : [config.GH_ORG, repo];
@@ -150,6 +151,7 @@ export async function getCommitsOnBranch(
     repo:     repoName,
     basehead: `${base}...${branch}`,
   });
+  console.log(`Commit data: ${JSON.stringify(data.commits)}`);
 
   return (data.commits ?? []).map(c => ({
     sha:     c.sha,

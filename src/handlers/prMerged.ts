@@ -116,6 +116,9 @@ async function handleReleaseToMain(input: {
   const commits = await getCommitsOnBranch(repo, headBranch, 'main');
   console.log(`  Found ${commits.length} commits on ${headBranch}`);
 
+  if(commits.length == 0) {
+    throw new Error(`No Commits found in ${headBranch}`);
+  }
   // Extract all unique ticket IDs from every commit message
   const allText  = commits.map(c => c.message).join('\n');
 
